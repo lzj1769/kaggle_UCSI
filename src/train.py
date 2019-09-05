@@ -2,7 +2,7 @@ import os
 import time
 import argparse
 import numpy as np
-from torch.optim import Adam
+from torch.optim import SGD
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 from model import *
@@ -20,8 +20,8 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Training model for steel defect detection')
     parser.add_argument("--model", type=str, default='UResNet34',
                         help="Name for encode used in Unet. Currently available: UResNet34")
-    parser.add_argument("--num-workers", type=int, default=2,
-                        help="Number of workers for training. Default: 2")
+    parser.add_argument("--num-workers", type=int, default=3,
+                        help="Number of workers for training. Default: 3")
     parser.add_argument("--batch-size", type=int, default=4,
                         help="Batch size for training. Default: 4")
     parser.add_argument("--num-epochs", type=int, default=200,
@@ -46,9 +46,9 @@ class Trainer(object):
         self.training_history_path = training_history_path
         self.criterion = DiceBCELoss()
 
-        self.optimizer = Adam(self.model.parameters())
-        self.scheduler = ReduceLROnPlateau(self.optimizer, mode='min', factor=0.1, patience=5, threshold=0,
-                                           verbose=True, min_lr=1e-05)
+        self.optimizer = SGD(self.model.parameters(), lr=1e-02, momentum=0.9, weight_decay=1e-04)
+        self.scheduler = ReduceLROnPlateau(self.optimizer, mode='min', factor=0.5, patience=5, threshold=0,
+                                           verbose=True, min_lr=1e-03)
         self.model = self.model.cuda()
         self.dataloaders = {
             phase: get_dataloader(
@@ -172,7 +172,6 @@ class Trainer(object):
                 "epoch": epoch,
                 "best_loss": self.best_loss,
                 "state_dict": self.model.state_dict(),
-                "optimizer": self.optimizer.state_dict(),
             }
 
             self.scheduler.step(metrics=valid_loss)
