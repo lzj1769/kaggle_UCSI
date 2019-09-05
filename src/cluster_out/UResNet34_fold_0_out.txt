@@ -1,0 +1,15 @@
+Train on 1109 mini-batches, validate on 278 mini-batches
+Epoch: 1/200 |  time : 09/05/19-18:35:13
+=================================================================
+train_loss: 0.64371890, train_bce_loss: 0.42257509, train_dice_loss: 0.86486270, train_dice: 0.33712056
+valid_loss: 0.58676031, valid_bce_loss: 0.35205283, valid_dice_loss: 0.82146778, valid_dice: 0.39187613
+******** Validation loss improved from inf to 0.5867603067442667, saving state ********
+
+Epoch: 2/200 |  time : 09/05/19-18:52:05
+=================================================================
+train_loss: 0.63389998, train_bce_loss: 0.40938336, train_dice_loss: 0.85841660, train_dice: 0.28880492
+valid_loss: 0.58335811, valid_bce_loss: 0.34723082, valid_dice_loss: 0.81948540, valid_dice: 0.44631851
+******** Validation loss improved from 0.5867603067442667 to 0.5833581087829398, saving state ********
+
+Epoch: 3/200 |  time : 09/05/19-19:08:53
+=================================================================
