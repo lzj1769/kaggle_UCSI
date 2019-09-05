@@ -3,12 +3,6 @@ SPLIT_FOLDER = "/home/rs619065/kaggle/UCSI/input/understanding_cloud_organizatio
 DATA_FOLDER = "/home/rs619065/kaggle/UCSI/input/understanding_cloud_organization/train_images"
 TRAIN_DF_PATH = "/home/rs619065/kaggle/UCSI/input/understanding_cloud_organization/train.csv"
 
-# imagenet pretrained model configuration
-MEAN = [0.485, 0.456, 0.406]
-STD = [0.229, 0.224, 0.225]
-
-LABELS = []
-
 # model weights configuration
 SAVE_MODEL_PATH = "/home/rs619065/kaggle/UCSI/input/models"
 

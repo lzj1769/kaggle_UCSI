@@ -3,7 +3,16 @@ import numpy as np
 import torch
 import cv2
 
-from configure import MEAN, STD
+
+def do_resize_image(image, width, height):
+    image = cv2.resize(image, dsize=(width, height))
+    return image
+
+
+def do_resize_mask(mask, width, height):
+    mask = cv2.resize(mask, dsize=(width, height))
+    mask = (mask > 0.5).astype(np.float32)
+    return mask
 
 
 def do_horizontal_flip(image):
@@ -12,15 +21,9 @@ def do_horizontal_flip(image):
     return image
 
 
-def do_horizontal_flip2(image, mask):
-    image = do_horizontal_flip(image)
-    mask = do_horizontal_flip(mask)
-    return image, mask
-
-
-def do_brightness_multiply(image, alpha=1):
-    image = alpha * image
-    image = np.clip(image, 0, 1)
+def do_vertical_flip(image):
+    # flip left-right
+    image = cv2.flip(image, 0)
     return image
 
 
@@ -111,22 +114,6 @@ def do_brightness_shift(image, alpha=0.125):
     image = image + alpha
     image = np.clip(image, 0, 1)
     return image
-
-
-def do_normalization(image, max_pixel_value=255):
-    mean = np.array(MEAN, dtype=np.float32)
-    mean *= max_pixel_value
-
-    std = np.array(STD, dtype=np.float32)
-    std *= max_pixel_value
-
-    denominator = np.reciprocal(std, dtype=np.float32)
-
-    img = image.astype(np.float32)
-    img -= mean
-    img *= denominator
-
-    return img
 
 
 def img_to_tensor(img):

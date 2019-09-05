@@ -8,25 +8,10 @@ from transform import *
 
 def train_aug(image, mask):
     if np.random.rand() < 0.5:
-        image, mask = do_horizontal_flip2(image, mask)
+        image, mask = do_horizontal_flip(image), do_horizontal_flip(mask)
 
     if np.random.rand() < 0.5:
-        c = np.random.choice(3)
-        if c == 0:
-            image, mask = do_random_shift_scale_crop_pad2(image, mask, 0.2)
-
-        if c == 1:
-            image, mask = do_horizontal_shear2(image, mask, dx=np.random.uniform(-0.07, 0.07))
-
-        if c == 2:
-            image, mask = do_shift_scale_rotate2(image, mask, dx=0, dy=0, scale=1, angle=np.random.uniform(0, 15))
-
-    if np.random.rand() < 0.5:
-        c = np.random.choice(2)
-        if c == 0:
-            image = do_brightness_shift(image, np.random.uniform(-0.1, +0.1))
-        if c == 1:
-            image = do_brightness_multiply(image, np.random.uniform(1 - 0.08, 1 + 0.08))
+        image, mask = do_vertical_flip(image), do_vertical_flip(mask)
 
     return image, mask
 
@@ -61,15 +46,17 @@ class CloudDataset(Dataset):
     def __getitem__(self, idx):
         image_id, mask = make_mask(idx, self.df)
         image_path = os.path.join(self.data_folder, image_id)
-        img = cv2.imread(image_path)
+        image = cv2.imread(image_path) / 255.0
+        image = do_resize_image(image=image, width=1024, height=1024)
+        mask = do_resize_mask(mask=mask, width=1024, height=1024)
+
         if self.phase == "train":
-            img, mask = train_aug(image=img, mask=mask)
+            img, mask = train_aug(image=image, mask=mask)
 
-        img = do_normalization(img)
-        img, mask = img_to_tensor(img), mask_to_tensor(mask)
-        mask = mask[0].permute(2, 0, 1)  # 1x4x256x1600
+        image, mask = img_to_tensor(image), mask_to_tensor(mask)
+        mask = mask[0].permute(2, 0, 1)  # 1x4x1024x1024
 
-        return img, mask
+        return image, mask
 
     def __len__(self):
         return len(self.filenames)
@@ -94,5 +81,5 @@ if __name__ == '__main__':
 
     imgs, masks = next(iter(dataloader))
 
-    print(imgs.shape)  # batch * 3 * 1400 * 2100
-    print(masks.shape)  # batch * 4 * 1400 * 2100
+    print(imgs.shape)  # batch * 3 * 1024 * 1024
+    print(masks)  # batch * 4 * 1024 * 1024
