@@ -110,12 +110,6 @@ def do_shift_scale_rotate2(image, mask, dx=0, dy=0, scale=1, angle=0):
     return image, mask
 
 
-def do_brightness_shift(image, alpha=0.125):
-    image = image + alpha
-    image = np.clip(image, 0, 1)
-    return image
-
-
 def img_to_tensor(img):
     tensor = torch.from_numpy(np.moveaxis(img, -1, 0).astype(np.float32))
     return tensor

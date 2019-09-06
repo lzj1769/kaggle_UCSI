@@ -124,12 +124,6 @@ class UResNet34(nn.Module):
         decode2 = self.decoder2(decode3, encode1)  # 64x256x256 + 64x512x512 ==> 64x512x512
         decode1 = self.decoder1(decode2, None)  # 64x512x512 ==> 64x1024x1024
 
-        # x = torch.cat((decode1,
-        #               F.interpolate(decode2, scale_factor=2, mode='bilinear', align_corners=True),
-        #               F.interpolate(decode3, scale_factor=4, mode='bilinear', align_corners=True),
-        #               F.interpolate(decode4, scale_factor=8, mode='bilinear', align_corners=True),
-        #               F.interpolate(decode5, scale_factor=16, mode='bilinear', align_corners=True)),
-        #              1)  # 320, 1024, 1024
         x = self.output(decode1)
 
         return x

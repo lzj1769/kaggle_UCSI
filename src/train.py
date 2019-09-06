@@ -20,8 +20,8 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Training model for steel defect detection')
     parser.add_argument("--model", type=str, default='UResNet34',
                         help="Name for encode used in Unet. Currently available: UResNet34")
-    parser.add_argument("--num-workers", type=int, default=3,
-                        help="Number of workers for training. Default: 3")
+    parser.add_argument("--num-workers", type=int, default=2,
+                        help="Number of workers for training. Default: 2")
     parser.add_argument("--batch-size", type=int, default=4,
                         help="Batch size for training. Default: 4")
     parser.add_argument("--num-epochs", type=int, default=200,

@@ -1,0 +1,1 @@
+slurmstepd: error: *** JOB 8218638 ON ncg42 CANCELLED AT 2019-09-06T10:21:13 ***
