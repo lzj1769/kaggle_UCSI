@@ -107,6 +107,7 @@ class UResNet34(nn.Module):
         self.decoder2 = DecoderBlock(64 + 64, 64, 64)
         self.decoder1 = DecoderBlock(64, 32, 64)
 
+        self.dropout = nn.Dropout2d(p=0.5)
         self.output = nn.Sequential(nn.Conv2d(64, 32, kernel_size=3, padding=1),
                                     nn.ReLU(inplace=True),
                                     nn.Conv2d(32, classes, kernel_size=1, padding=0))
@@ -124,6 +125,7 @@ class UResNet34(nn.Module):
         decode2 = self.decoder2(decode3, encode1)  # 64x256x256 + 64x512x512 ==> 64x512x512
         decode1 = self.decoder1(decode2, None)  # 64x512x512 ==> 64x1024x1024
 
+        x = self.dropout(x)
         x = self.output(decode1)
 
         return x
