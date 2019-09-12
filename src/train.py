@@ -238,12 +238,6 @@ def main():
     model = None
     if args.model == "UResNet34":
         model = UResNet34()
-    elif args.model == "UResNet50":
-        model = UResNet50()
-    elif args.model == "UResNext50":
-        model = UResNext50()
-    elif args.model == "USeResNext50":
-        model = USeResNext50()
 
     model_save_path = os.path.join(SAVE_MODEL_PATH, args.model)
     training_history_path = os.path.join(TRAINING_HISTORY_PATH, args.model)

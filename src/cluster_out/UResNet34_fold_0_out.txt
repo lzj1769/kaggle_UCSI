@@ -1,0 +1,5 @@
+Training on 4462 images, Fish: 2225, Flower: 1892, Gravel: 2351, Sugar: 3000
+Validate on 1084 images, Fish: 556, Flower: 473, Gravel: 588, Sugar: 751
+Epoch: 1/100 |  time : 09/12/19-23:01:42
+Learning rate: 0.01000000
+=================================================================

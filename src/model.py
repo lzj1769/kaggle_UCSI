@@ -24,24 +24,6 @@ class Conv2dReLU(nn.Module):
         return self.block(x)
 
 
-class SELayer(nn.Module):
-    def __init__(self, channel, reduction=16):
-        super(SELayer, self).__init__()
-        self.avg_pool = nn.AdaptiveAvgPool2d(1)
-        self.fc = nn.Sequential(
-            nn.Linear(channel, int(channel / reduction), bias=False),
-            nn.ReLU(inplace=True),
-            nn.Linear(int(channel / reduction), channel, bias=False),
-            nn.Sigmoid()
-        )
-
-    def forward(self, x):
-        b, c, _, _ = x.size()
-        y = self.avg_pool(x).view(b, c)
-        y = self.fc(y).view(b, c, 1, 1)
-        return x * y.expand_as(x)
-
-
 class SCSEBlock(nn.Module):
     def __init__(self, channel, reduction=16):
         super(SCSEBlock, self).__init__()
@@ -123,10 +105,10 @@ class UResNet34(nn.Module):
         decode4 = self.decoder4(decode5, encode3)  # 64x64x64 + 128x128x128 ==> 64x128x128
         decode3 = self.decoder3(decode4, encode2)  # 64x128x128 + 64x256x256 ==> 64x256x256
         decode2 = self.decoder2(decode3, encode1)  # 64x256x256 + 64x512x512 ==> 64x512x512
-        decode1 = self.decoder1(decode2, None)  # 64x512x512 ==> 64x1024x1024
+        x = self.decoder1(decode2, None)  # 64x512x512 ==> 64x1024x1024
 
         x = self.dropout(x)
-        x = self.output(decode1)
+        x = self.output(x)
 
         return x
 

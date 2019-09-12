@@ -47,7 +47,9 @@ class CloudDataset(Dataset):
     def __getitem__(self, idx):
         image_id, mask = make_mask(idx, self.df)
         image_path = os.path.join(self.data_folder, image_id)
-        image = cv2.imread(image_path) / 255.0
+        image = cv2.imread(image_path)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
         image = do_resize_image(image=image, width=1024, height=1024)
         mask = do_resize_mask(mask=mask, width=1024, height=1024)
 
