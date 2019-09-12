@@ -30,6 +30,7 @@ def make_mask(row_id, df):
             length = map(int, label[1::2])
             mask = np.zeros(1400 * 2100, dtype=np.uint8)
             for pos, le in zip(positions, length):
+                pos -= 1
                 mask[pos:(pos + le)] = 1
             masks[:, :, idx] = mask.reshape(1400, 2100, order='F')
 
@@ -67,11 +68,13 @@ def get_dataloader(phase, fold, batch_size, num_workers):
     df = pd.read_csv(df_path)
     image_dataset = CloudDataset(df, phase)
     shuffle = True if phase == "train" else False
+    drop_last = True if phase == "train" else False
     dataloader = DataLoader(image_dataset,
                             batch_size=batch_size,
                             num_workers=num_workers,
                             pin_memory=True,
-                            shuffle=shuffle)
+                            shuffle=shuffle,
+                            drop_last=drop_last)
 
     return dataloader
 

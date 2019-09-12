@@ -1,1 +1,0 @@
-slurmstepd: error: *** JOB 8218640 ON ncg20 CANCELLED AT 2019-09-06T10:21:17 ***
