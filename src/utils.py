@@ -18,15 +18,14 @@ def compute_dice(preds, truth, threshold=0.5):
     probability = torch.sigmoid(preds)
     batch_size = truth.shape[0]
     channel_num = truth.shape[1]
-    mean_dice_channel = 0.
+    mean_dice_channels = [0.] * channel_num
     with torch.no_grad():
         for i in range(batch_size):
             for j in range(channel_num):
                 channel_dice = dice_single_channel(probability[i, j, :, :], truth[i, j, :, :], threshold)
+                mean_dice_channels[j] += channel_dice / batch_size
 
-                mean_dice_channel += channel_dice / (batch_size * channel_num)
-
-    return mean_dice_channel
+    return mean_dice_channels
 
 
 def dice_single_channel(probability, truth, threshold, eps=1E-9):
@@ -34,27 +33,6 @@ def dice_single_channel(probability, truth, threshold, eps=1E-9):
     t = (truth.view(-1) > 0.5).float()
     dice = (2.0 * (p * t).sum() + eps) / (p.sum() + t.sum() + eps)
     return dice
-
-
-def dice_loss(preds, truth):
-    probability = torch.sigmoid(preds)
-    batch_size = truth.shape[0]
-    channel_num = truth.shape[1]
-    loss = 0.0
-    for i in range(batch_size):
-        for j in range(channel_num):
-            loss += dice_loss_single_channel(probability[i, j, :, :], truth[i, j, :, :]) / (batch_size * channel_num)
-
-    return loss
-
-
-def dice_loss_single_channel(probability, true, smooth=1.0):
-    iflat = probability.view(-1)
-    tflat = true.view(-1)
-    intersection = (iflat * tflat).sum()
-
-    return 1 - ((2. * intersection + smooth) /
-                (iflat.sum() + tflat.sum() + smooth))
 
 
 if __name__ == '__main__':
@@ -70,7 +48,5 @@ if __name__ == '__main__':
     imgs, masks = next(iter(dataloader))
     preds = model(imgs.cuda())
     criterion = BCEWithLogitsLoss()
-    loss = dice_loss(preds, masks.cuda())
-    print(loss.item())
     loss = criterion(preds, masks.cuda())
     print(loss.item())
