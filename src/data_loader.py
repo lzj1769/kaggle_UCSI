@@ -20,7 +20,7 @@ def mask_to_tensor(mask):
 
 def train_aug(p=0.5):
     return Compose([RandomRotate90(), Flip(), Transpose(),
-                    ShiftScaleRotate(shift_limit=0.0625, scale_limit=0.2, rotate_limit=45, p=0.2)], p=p)
+                    ShiftScaleRotate(shift_limit=0.0625, scale_limit=0.2, rotate_limit=45)], p=p)
 
 
 def make_mask(row_id, df):

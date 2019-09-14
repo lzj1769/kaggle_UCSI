@@ -187,21 +187,26 @@ class Trainer(object):
             if valid_loss < self.best_loss:
                 print("******** Validation loss improved from %0.8f to %0.8f ********" % (self.best_loss, valid_loss))
                 self.best_loss = valid_loss
-                thresholds, best_dice = self.optimize_threshold()
-                print("******** Optimized thresholds: %0.8f, %0.8f, %0.8f, %0.8f ********" % (thresholds[0],
-                                                                                              thresholds[1],
-                                                                                              thresholds[2],
-                                                                                              thresholds[3]))
-                print("******** Best dices:           %0.8f, %0.8f, %0.8f, %0.8f ********" % (best_dice[0],
-                                                                                              best_dice[1],
-                                                                                              best_dice[2],
-                                                                                              best_dice[3]))
-                print("******** Mean dice:            %0.8f" % np.mean(best_dice))
-                state = {
-                    "threshold": thresholds,
-                    "best_dice": best_dice,
-                    "state_dict": self.model.state_dict(),
-                }
+                if epoch > 10:
+                    thresholds, best_dice = self.optimize_threshold()
+                    print("******** Optimized thresholds: %0.8f, %0.8f, %0.8f, %0.8f ********" % (thresholds[0],
+                                                                                                  thresholds[1],
+                                                                                                  thresholds[2],
+                                                                                                  thresholds[3]))
+                    print("******** Best dices:           %0.8f, %0.8f, %0.8f, %0.8f ********" % (best_dice[0],
+                                                                                                  best_dice[1],
+                                                                                                  best_dice[2],
+                                                                                                  best_dice[3]))
+                    print("******** Mean dice:            %0.8f" % np.mean(best_dice))
+                    state = {
+                        "threshold": thresholds,
+                        "best_dice": best_dice,
+                        "state_dict": self.model.state_dict(),
+                    }
+                else:
+                    state = {
+                        "state_dict": self.model.state_dict(),
+                    }
 
                 filename = os.path.join(self.model_save_path, "{}_fold_{}.pt".format(self.model_save_name, self.fold))
                 if os.path.exists(filename):
