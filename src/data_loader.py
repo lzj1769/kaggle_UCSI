@@ -1,19 +1,26 @@
 import os
+import cv2
 import pandas as pd
+import numpy as np
+import torch
 from torch.utils.data import Dataset, DataLoader
 
 from configure import SPLIT_FOLDER, DATA_FOLDER
-from transform import *
+from albumentations import (RandomRotate90, Transpose, ShiftScaleRotate, Flip, Compose)
 
 
-def train_aug(image, mask):
-    if np.random.rand() < 0.5:
-        image, mask = do_horizontal_flip(image), do_horizontal_flip(mask)
+def img_to_tensor(img):
+    tensor = torch.from_numpy(np.moveaxis(img, -1, 0).astype(np.float32)) / 255.0
+    return tensor
 
-    if np.random.rand() < 0.5:
-        image, mask = do_vertical_flip(image), do_vertical_flip(mask)
 
-    return image, mask
+def mask_to_tensor(mask):
+    return torch.from_numpy(mask.astype(np.float32))
+
+
+def train_aug(p=0.5):
+    return Compose([RandomRotate90(), Flip(), Transpose(),
+                    ShiftScaleRotate(shift_limit=0.0625, scale_limit=0.2, rotate_limit=45, p=0.2)], p=p)
 
 
 def make_mask(row_id, df):
@@ -43,6 +50,7 @@ class CloudDataset(Dataset):
         self.data_folder = DATA_FOLDER
         self.phase = phase
         self.filenames = self.df.ImageId.values
+        self.transform = train_aug(p=0.5)
 
     def __getitem__(self, idx):
         image_id, mask = make_mask(idx, self.df)
@@ -50,14 +58,16 @@ class CloudDataset(Dataset):
         image = cv2.imread(image_path)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-        image = do_resize_image(image=image, width=1024, height=1024)
-        mask = do_resize_mask(mask=mask, width=1024, height=1024)
+        image = cv2.resize(image, (1024, 1024))
+        mask = cv2.resize(mask, (1024, 1024))
+        mask = (mask > 0.5).astype(np.int8)
 
         if self.phase == "train":
-            img, mask = train_aug(image=image, mask=mask)
+            augmented = self.transform(image=image, mask=mask)
+            image, mask = augmented["image"], augmented["mask"]
 
         image, mask = img_to_tensor(image), mask_to_tensor(mask)
-        mask = mask[0].permute(2, 0, 1)  # 1x4x1024x1024
+        mask = mask.permute(2, 0, 1)  # 4x1024x1024
 
         return image, mask
 
