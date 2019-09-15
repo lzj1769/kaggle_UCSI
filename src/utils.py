@@ -28,10 +28,14 @@ def compute_dice(preds, truth, threshold=0.5):
     return mean_dice_channels
 
 
-def dice_single_channel(probability, truth, threshold, eps=1E-9):
+def dice_single_channel(probability, truth, threshold):
     p = (probability.view(-1) > threshold).float()
     t = (truth.view(-1) > 0.5).float()
-    dice = (2.0 * (p * t).sum() + eps) / (p.sum() + t.sum() + eps)
+    if p.sum() == 0.0 and t.sum() == 0.0:
+        dice = 1.0
+    else:
+        dice = (2.0 * (p * t).sum()) / (p.sum() + t.sum()).item()
+
     return dice
 
 

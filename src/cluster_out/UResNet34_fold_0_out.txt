@@ -1,12 +1,5 @@
 Training on 4462 images, Fish: 2225, Flower: 1892, Gravel: 2351, Sugar: 3000
 Validate on 1084 images, Fish: 556, Flower: 473, Gravel: 588, Sugar: 751
-Epoch: 1/100 |  time : 09/14/19-13:38:31
-Learning rate: 0.01000000
-=================================================================
-train_loss: 0.58124852, train_bce_loss: 0.37185439, train_dice_loss: 0.79064265
-valid_loss: 0.53214347, valid_bce_loss: 0.31680367, valid_dice_loss: 0.74748328
-******** Validation loss improved from inf to 0.53214347 ********
-
-Epoch: 2/100 |  time : 09/14/19-13:53:38
+Epoch: 1/100 |  time : 09/15/19-17:26:58
 Learning rate: 0.01000000
 =================================================================

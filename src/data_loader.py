@@ -5,22 +5,24 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset, DataLoader
 
-from configure import SPLIT_FOLDER, DATA_FOLDER
-from albumentations import (RandomRotate90, Transpose, ShiftScaleRotate, Flip, Compose)
+from configure import SPLIT_FOLDER, TRAIN_DATA_FOLDER
+import albumentations as albu
 
-
-def img_to_tensor(img):
-    tensor = torch.from_numpy(np.moveaxis(img, -1, 0).astype(np.float32)) / 255.0
-    return tensor
-
-
-def mask_to_tensor(mask):
-    return torch.from_numpy(mask.astype(np.float32))
-
-
-def train_aug(p=0.5):
-    return Compose([RandomRotate90(), Flip(), Transpose(),
-                    ShiftScaleRotate(shift_limit=0.0625, scale_limit=0.2, rotate_limit=45)], p=p)
+train_aug = albu.Compose([
+    albu.OneOf([
+        albu.RandomGamma(gamma_limit=(60, 120), p=1),
+        albu.RandomBrightnessContrast(brightness_limit=0.2, contrast_limit=0.2, p=1),
+        albu.CLAHE(clip_limit=4.0, tile_grid_size=(4, 4), p=1),
+    ], p=0.5),
+    albu.OneOf([
+        albu.Blur(blur_limit=4, p=1),
+        albu.MotionBlur(blur_limit=4, p=1),
+        albu.MedianBlur(blur_limit=4, p=1)
+    ], p=0.5),
+    albu.HorizontalFlip(p=0.5),
+    albu.ShiftScaleRotate(shift_limit=0.2, scale_limit=0.2, rotate_limit=15,
+                          interpolation=cv2.INTER_LINEAR, border_mode=cv2.BORDER_CONSTANT, p=0.5)
+])
 
 
 def make_mask(row_id, df):
@@ -47,10 +49,9 @@ def make_mask(row_id, df):
 class CloudDataset(Dataset):
     def __init__(self, df, phase):
         self.df = df
-        self.data_folder = DATA_FOLDER
+        self.data_folder = TRAIN_DATA_FOLDER
         self.phase = phase
         self.filenames = self.df.ImageId.values
-        self.transform = train_aug(p=0.5)
 
     def __getitem__(self, idx):
         image_id, mask = make_mask(idx, self.df)
@@ -58,16 +59,16 @@ class CloudDataset(Dataset):
         image = cv2.imread(image_path)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-        image = cv2.resize(image, (1024, 1024))
-        mask = cv2.resize(mask, (1024, 1024))
-        mask = (mask > 0.5).astype(np.int8)
+        image = cv2.resize(image, (512, 1024), interpolation=cv2.INTER_LINEAR)
+        mask = cv2.resize(mask, (512, 1024), interpolation=cv2.INTER_LINEAR)
+        mask = (mask > 0.5).astype(np.float32)
 
         if self.phase == "train":
-            augmented = self.transform(image=image, mask=mask)
+            augmented = train_aug(image=image, mask=mask)
             image, mask = augmented["image"], augmented["mask"]
 
-        image, mask = img_to_tensor(image), mask_to_tensor(mask)
-        mask = mask.permute(2, 0, 1)  # 4x1024x1024
+        image = torch.from_numpy(np.moveaxis(image, -1, 0).astype(np.float32)) / 255.0
+        mask = torch.from_numpy(mask).permute(2, 0, 1)
 
         return image, mask
 

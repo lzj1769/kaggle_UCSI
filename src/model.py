@@ -90,9 +90,9 @@ class UResNet34(nn.Module):
         self.decoder1 = DecoderBlock(64, 32, 64)
 
         self.dropout = nn.Dropout2d(p=0.5)
-        self.output = nn.Sequential(nn.Conv2d(64, 32, kernel_size=3, padding=1),
+        self.output = nn.Sequential(nn.Conv2d(320, 64, kernel_size=3, padding=1),
                                     nn.ReLU(inplace=True),
-                                    nn.Conv2d(32, classes, kernel_size=1, padding=0))
+                                    nn.Conv2d(64, classes, kernel_size=1, padding=0))
 
     def forward(self, x):
         encode1 = self.encoder1(x)  # 3x1024x1024 ==> 64x512x512 (1/4)
@@ -106,6 +106,13 @@ class UResNet34(nn.Module):
         decode3 = self.decoder3(decode4, encode2)  # 64x128x128 + 64x256x256 ==> 64x256x256
         decode2 = self.decoder2(decode3, encode1)  # 64x256x256 + 64x512x512 ==> 64x512x512
         x = self.decoder1(decode2, None)  # 64x512x512 ==> 64x1024x1024
+
+        x = torch.cat((x,
+                       F.interpolate(decode2, scale_factor=2, mode='bilinear', align_corners=True),
+                       F.interpolate(decode3, scale_factor=4, mode='bilinear', align_corners=True),
+                       F.interpolate(decode4, scale_factor=8, mode='bilinear', align_corners=True),
+                       F.interpolate(decode5, scale_factor=16, mode='bilinear', align_corners=True)),
+                      1)
 
         x = self.dropout(x)
         x = self.output(x)

@@ -21,7 +21,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Training model for steel defect detection')
     parser.add_argument("--model", type=str, default='UResNet34',
                         help="Name for encode used in Unet. Currently available: UResNet34")
-    parser.add_argument("--num-workers", type=int, default=2,
+    parser.add_argument("--num-workers", type=int, default=4,
                         help="Number of workers for training. Default: 2")
     parser.add_argument("--batch-size", type=int, default=4,
                         help="Batch size for training. Default: 4")
@@ -63,6 +63,7 @@ class Trainer(object):
         self.bce_loss = {phase: [] for phase in self.phases}
         self.dice_loss = {phase: [] for phase in self.phases}
         self.dice = {phase: [] for phase in self.phases}
+        self.thresholds = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
 
     def forward(self, images, masks):
         outputs = self.model(images.cuda())
@@ -75,6 +76,7 @@ class Trainer(object):
         running_loss = 0.0
         running_bce_loss = 0.0
         running_dice_loss = 0.0
+        running_dice = np.zeros(shape=(len(self.thresholds), 4))
 
         for images, masks in self.dataloaders[phase]:
             loss, bce_loss, dice_loss, outputs = self.forward(images, masks)
@@ -87,17 +89,25 @@ class Trainer(object):
             running_bce_loss += bce_loss.item()
             running_dice_loss += dice_loss.item()
 
+            outputs = outputs.detach().cpu()
+            for i, threshold in enumerate(self.thresholds):
+                dice = compute_dice(outputs, masks, threshold=threshold)
+                for j in range(4):
+                    running_dice[i, j] += dice[j]
+
         epoch_loss = running_loss / len(self.dataloaders[phase])
         epoch_bce_loss = running_bce_loss / len(self.dataloaders[phase])
         epoch_dice_loss = running_dice_loss / len(self.dataloaders[phase])
+        epoch_dice = running_dice / len(self.dataloaders[phase])
 
         self.loss[phase].append(epoch_loss)
         self.bce_loss[phase].append(epoch_bce_loss)
         self.dice_loss[phase].append(epoch_dice_loss)
+        self.dice[phase] = epoch_dice
 
         torch.cuda.empty_cache()
 
-        return epoch_loss, epoch_bce_loss, epoch_dice_loss
+        return epoch_loss, epoch_bce_loss, epoch_dice_loss, epoch_dice
 
     def plot_history(self):
         fig, (ax1, ax2, ax3) = plt.subplots(nrows=1, ncols=3, figsize=(12, 4))
@@ -174,39 +184,29 @@ class Trainer(object):
             print("Learning rate: %0.8f" % self.scheduler.get_lr()[0])
             print("=================================================================")
 
-            train_loss, train_bce_loss, train_dice_loss = self.iterate("train")
+            train_loss, train_bce_loss, train_dice_loss, train_dice = self.iterate("train")
             with torch.no_grad():
-                valid_loss, valid_bce_loss, valid_dice_loss = self.iterate("valid")
+                valid_loss, valid_bce_loss, valid_dice_loss, valid_dice = self.iterate("valid")
 
             print("train_loss: %0.8f, train_bce_loss: %0.8f, train_dice_loss: %0.8f" % (train_loss, train_bce_loss,
                                                                                         train_dice_loss))
             print("valid_loss: %0.8f, valid_bce_loss: %0.8f, valid_dice_loss: %0.8f" % (valid_loss, valid_bce_loss,
                                                                                         valid_dice_loss))
 
+            for i, threshold in enumerate(self.thresholds):
+                print("%0.1f | %0.5f | %0.5f | %0.5f | %0.5f | %0.5f | %0.5f | %0.5f | %0.5f | %0.5f | %0.5f"
+                      % (self.thresholds[i],
+                         train_dice[i, 0], train_dice[i, 1], train_dice[i, 2], train_dice[i, 3], np.mean(train_dice[i]),
+                         valid_dice[i, 0], valid_dice[i, 1], valid_dice[i, 2], valid_dice[i, 3], np.mean(valid_dice[i]))
+                      )
+
             self.scheduler.step(epoch=epoch)
             if valid_loss < self.best_loss:
                 print("******** Validation loss improved from %0.8f to %0.8f ********" % (self.best_loss, valid_loss))
                 self.best_loss = valid_loss
-                if epoch > 10:
-                    thresholds, best_dice = self.optimize_threshold()
-                    print("******** Optimized thresholds: %0.8f, %0.8f, %0.8f, %0.8f ********" % (thresholds[0],
-                                                                                                  thresholds[1],
-                                                                                                  thresholds[2],
-                                                                                                  thresholds[3]))
-                    print("******** Best dices:           %0.8f, %0.8f, %0.8f, %0.8f ********" % (best_dice[0],
-                                                                                                  best_dice[1],
-                                                                                                  best_dice[2],
-                                                                                                  best_dice[3]))
-                    print("******** Mean dice:            %0.8f" % np.mean(best_dice))
-                    state = {
-                        "threshold": thresholds,
-                        "best_dice": best_dice,
-                        "state_dict": self.model.state_dict(),
-                    }
-                else:
-                    state = {
-                        "state_dict": self.model.state_dict(),
-                    }
+                state = {
+                    "state_dict": self.model.state_dict(),
+                }
 
                 filename = os.path.join(self.model_save_path, "{}_fold_{}.pt".format(self.model_save_name, self.fold))
                 if os.path.exists(filename):
@@ -215,24 +215,6 @@ class Trainer(object):
 
             print()
             self.plot_history()
-
-    def optimize_threshold(self):
-        mean_dice = np.zeros(shape=(100, 4))
-        thresholds = np.linspace(start=0, stop=1, num=100)
-        for images, masks in self.dataloaders["valid"]:
-            preds = self.model(images.cuda()).detach().cpu()
-            for i, threshold in enumerate(thresholds):
-                dice = compute_dice(preds, masks, threshold=threshold)
-                for j in range(4):
-                    mean_dice[i, j] += dice[j].item()
-
-        mean_dice = mean_dice / len(self.dataloaders["valid"])
-        best_dice = np.max(mean_dice, axis=0)
-        best_dice_index = np.argmax(mean_dice, axis=0)
-
-        self.plot_dice(thresholds, mean_dice)
-
-        return thresholds[best_dice_index], best_dice
 
 
 def main():
