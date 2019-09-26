@@ -10,7 +10,6 @@ import albumentations as albu
 
 train_aug = albu.Compose([
     albu.OneOf([
-        albu.RandomGamma(gamma_limit=(60, 120), p=1),
         albu.RandomBrightnessContrast(brightness_limit=0.2, contrast_limit=0.2, p=1),
         albu.CLAHE(clip_limit=4.0, tile_grid_size=(4, 4), p=1),
     ], p=0.5),
@@ -19,8 +18,14 @@ train_aug = albu.Compose([
         albu.MotionBlur(blur_limit=4, p=1),
         albu.MedianBlur(blur_limit=4, p=1)
     ], p=0.5),
+    albu.OneOf([
+        albu.GridDistortion(p=1),
+        albu.OpticalDistortion(p=1)
+    ], p=0.5),
+    albu.RandomSizedCrop(min_max_height=(160, 320), height=320, width=640, w2h_ratio=2, p=0.5),
     albu.HorizontalFlip(p=0.5),
-    albu.ShiftScaleRotate(shift_limit=0.2, scale_limit=0.2, rotate_limit=15,
+    albu.VerticalFlip(p=0.5),
+    albu.ShiftScaleRotate(shift_limit=0.2, scale_limit=0.2, rotate_limit=45,
                           interpolation=cv2.INTER_LINEAR, border_mode=cv2.BORDER_CONSTANT, p=0.5)
 ])
 
@@ -59,8 +64,9 @@ class CloudDataset(Dataset):
         image = cv2.imread(image_path)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-        image = cv2.resize(image, (512, 1024), interpolation=cv2.INTER_LINEAR)
-        mask = cv2.resize(mask, (512, 1024), interpolation=cv2.INTER_LINEAR)
+        image = cv2.resize(image, (640, 320), interpolation=cv2.INTER_LINEAR)
+        mask = cv2.resize(mask, (640, 320), interpolation=cv2.INTER_LINEAR)
+
         mask = (mask > 0.5).astype(np.float32)
 
         if self.phase == "train":
@@ -90,12 +96,3 @@ def get_dataloader(phase, fold, batch_size, num_workers):
                             drop_last=drop_last)
 
     return dataloader
-
-
-if __name__ == '__main__':
-    dataloader = get_dataloader(phase="train", fold=1, batch_size=10, num_workers=1)
-
-    imgs, masks = next(iter(dataloader))
-
-    print(imgs.shape)  # batch * 3 * 1024 * 1024
-    print(masks)  # batch * 4 * 1024 * 1024

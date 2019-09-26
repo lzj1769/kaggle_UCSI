@@ -4,6 +4,21 @@ import numpy as np
 import torch
 
 
+def mixup_data(x, y, alpha=0.2):
+    '''Compute the mixup data. Return mixed inputs, pairs of targets, and lambda'''
+    if alpha > 0.:
+        lam = np.random.beta(alpha, alpha)
+    else:
+        lam = 1.
+    batch_size = x.size()[0]
+    index = torch.randperm(batch_size)
+
+    mixed_x = lam * x + (1 - lam) * x[index, :]
+    y_a, y_b = y, y[index]
+
+    return mixed_x, y_a, y_b, lam
+
+
 def seed_torch(seed):
     random.seed(seed)
     os.environ['PYTHONHASHSEED'] = str(seed)
@@ -18,7 +33,7 @@ def compute_dice(preds, truth, threshold=0.5):
     probability = torch.sigmoid(preds)
     batch_size = truth.shape[0]
     channel_num = truth.shape[1]
-    mean_dice_channels = [0.] * channel_num
+    mean_dice_channels = np.zeros(4, dtype=np.float32)
     with torch.no_grad():
         for i in range(batch_size):
             for j in range(channel_num):

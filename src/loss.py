@@ -30,7 +30,7 @@ class DiceLoss(nn.Module):
 
 
 class DiceBCELoss(nn.Module):
-    def __init__(self, alpha=0.5, smooth=1):
+    def __init__(self, alpha=0.9, smooth=1):
         super(DiceBCELoss, self).__init__()
         self.alpha = alpha
         self.bce = BCEWithLogitsLoss()

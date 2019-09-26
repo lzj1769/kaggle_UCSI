@@ -120,18 +120,31 @@ class UResNet34(nn.Module):
         return x
 
 
-if __name__ == '__main__':
-    from data_loader import get_dataloader
-    from torch.nn import BCEWithLogitsLoss
+class ResNet34(nn.Module):
+    def __init__(self, classes=4, pretrained=True):
+        super(ResNet34, self).__init__()
+        self.resnet = torchvision.models.resnet34(pretrained=pretrained)
 
-    dataloader = get_dataloader(phase="train", fold=0, batch_size=4, num_workers=2)
-    model = UResNet34()
-    model.cuda()
-    model.train()
-    imgs, masks = next(iter(dataloader))
-    preds = model(imgs.cuda())
-    print(preds.shape)
-    criterion = BCEWithLogitsLoss()
-    loss = criterion(preds, masks.cuda())
+        self.layer0 = nn.Sequential(self.resnet.conv1, self.resnet.bn1, self.resnet.relu, self.resnet.maxpool)
+        self.layer1 = nn.Sequential(self.resnet.layer1, SCSEBlock(64))
+        self.layer2 = nn.Sequential(self.resnet.layer2, SCSEBlock(128))
+        self.layer3 = nn.Sequential(self.resnet.layer3, SCSEBlock(256))
+        self.layer4 = nn.Sequential(self.resnet.layer4, SCSEBlock(512))
 
-    print(loss.item())
+        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
+        self.dropout = nn.Dropout(p=0.5)
+        self.fc = nn.Linear(512, classes)
+
+    def forward(self, x):
+        x = self.layer0(x)  # 3x256x1600 ==> 64x128x800 (1/4)
+        x = self.layer1(x)  # 64x128x800 ==> 64x64x400 (1/8)
+        x = self.layer2(x)  # 64x64x400 ==> 128x32x200 (1/16)
+        x = self.layer3(x)  # 128x32x200 ==> 256x16x100 (1/32)
+        x = self.layer4(x)  # 256x16x100 ==> 512x8x50 (1/64)
+
+        x = self.avgpool(x)
+        x = torch.flatten(x, 1)
+        x = self.dropout(x)
+        x = self.fc(x)
+
+        return x
