@@ -95,17 +95,17 @@ class UResNet34(nn.Module):
                                     nn.Conv2d(64, classes, kernel_size=1, padding=0))
 
     def forward(self, x):
-        encode1 = self.encoder1(x)  # 3x1024x1024 ==> 64x512x512 (1/4)
-        encode2 = self.encoder2(self.resnet.maxpool(encode1))  # 64x512x512 ==> 64x256x256 (1/8)
-        encode3 = self.encoder3(encode2)  # 64x256x256 ==> 128x128x128 (1/16)
-        encode4 = self.encoder4(encode3)  # 128x128x128 ==> 256x64x64 (1/32)
-        encode5 = self.encoder5(encode4)  # 256x64x64 ==> 512x32x32 (1/64)
+        encode1 = self.encoder1(x)  # 3x320x640 ==> 64x160x320 (1/4)
+        encode2 = self.encoder2(self.resnet.maxpool(encode1))  # 64x160x320 ==> 64x80x160 (1/8)
+        encode3 = self.encoder3(encode2)  # 64x80x160 ==> 128x40x80 (1/16)
+        encode4 = self.encoder4(encode3)  # 128x40x80 ==> 256x20x40 (1/32)
+        encode5 = self.encoder5(encode4)  # 256x20x40 ==> 512x10x20 (1/64)
 
-        decode5 = self.decoder5(encode5, encode4)  # 512x32x32 + 256x64x64 ==> 64x64x64
-        decode4 = self.decoder4(decode5, encode3)  # 64x64x64 + 128x128x128 ==> 64x128x128
-        decode3 = self.decoder3(decode4, encode2)  # 64x128x128 + 64x256x256 ==> 64x256x256
-        decode2 = self.decoder2(decode3, encode1)  # 64x256x256 + 64x512x512 ==> 64x512x512
-        x = self.decoder1(decode2, None)  # 64x512x512 ==> 64x1024x1024
+        decode5 = self.decoder5(encode5, encode4)  # 512x10x20 + 256x20x40 ==> 64x20x40
+        decode4 = self.decoder4(decode5, encode3)  # 64x20x40 + 128x40x80 ==> 64x40x80
+        decode3 = self.decoder3(decode4, encode2)  # 64x40x80 + 64x80x160 ==> 64x80x160
+        decode2 = self.decoder2(decode3, encode1)  # 64x80x160 + 64x160x320 ==> 64x160x320
+        x = self.decoder1(decode2, None)  # 64x160x320 ==> 64x320x640
 
         x = torch.cat((x,
                        F.interpolate(decode2, scale_factor=2, mode='bilinear', align_corners=True),

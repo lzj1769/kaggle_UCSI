@@ -25,7 +25,7 @@ def parse_args():
                         help="Number of workers for training. Default: 4")
     parser.add_argument("--batch-size", type=int, default=12,
                         help="Batch size for training. Default: 12")
-    parser.add_argument("--num-epochs", type=int, default=100,
+    parser.add_argument("--num-epochs", type=int, default=200,
                         help="Number of epochs for training. Default: 200")
     parser.add_argument("--fold", type=int, default=0)
     parser.add_argument("--mixup", action="store_true")
@@ -190,6 +190,8 @@ class TrainerSegmentation(object):
 
             print()
             self.plot_history()
+
+        return best_dice
 
 
 class TrainerClassification(object):
@@ -383,28 +385,30 @@ def main():
                                                                                       df_valid['isFlower'].sum(),
                                                                                       df_valid['isGravel'].sum(),
                                                                                       df_valid['isSugar'].sum()))
-    model_trainer = None
+    model_trainer, best = None, None
     if args.model == "UResNet34":
-        model_trainer = TrainerSegmentation(model=UResNet34(),
-                                            num_workers=args.num_workers,
-                                            batch_size=args.batch_size,
-                                            num_epochs=args.num_epochs,
-                                            model_save_path=model_save_path,
-                                            training_history_path=training_history_path,
-                                            model_save_name=args.model,
-                                            fold=args.fold)
+        best = model_trainer = TrainerSegmentation(model=UResNet34(),
+                                                   num_workers=args.num_workers,
+                                                   batch_size=args.batch_size,
+                                                   num_epochs=args.num_epochs,
+                                                   model_save_path=model_save_path,
+                                                   training_history_path=training_history_path,
+                                                   model_save_name=args.model,
+                                                   fold=args.fold)
     elif args.model == "ResNet34":
-        model_trainer = TrainerClassification(model=ResNet34(),
-                                              num_workers=args.num_workers,
-                                              batch_size=args.batch_size,
-                                              num_epochs=args.num_epochs,
-                                              model_save_path=model_save_path,
-                                              training_history_path=training_history_path,
-                                              model_save_name=args.model,
-                                              fold=args.fold,
-                                              mixup=args.mixup)
+        best = model_trainer = TrainerClassification(model=ResNet34(),
+                                                     num_workers=args.num_workers,
+                                                     batch_size=args.batch_size,
+                                                     num_epochs=args.num_epochs,
+                                                     model_save_path=model_save_path,
+                                                     training_history_path=training_history_path,
+                                                     model_save_name=args.model,
+                                                     fold=args.fold,
+                                                     mixup=args.mixup)
 
     model_trainer.start()
+
+    print("Training is done! best is {}".format(best))
 
 
 if __name__ == '__main__':
