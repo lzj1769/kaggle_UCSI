@@ -8,10 +8,10 @@
 #SBATCH -o ./run.txt
 
 ### Time your job needs to execute, e. g. 15 min 30 sec
-#SBATCH -t 5:00:00
+#SBATCH -t 10:00:00
 
 ### Memory your job needs per node, e. g. 1 GB
-#SBATCH --mem=20G --gres=gpu:1 --partition=c18g -A rwth0429
+#SBATCH --mem=50G --gres=gpu:1 --partition=c18g -A rwth0429
 
 # PATH
 export PATH=/home/rs619065/local/bin:$PATH
@@ -33,4 +33,8 @@ export PERL5LIB=/home/rs619065/perl5/lib/perl5:$PERL5LIB
 
 source ~/miniconda2/bin/activate py36env
 
-python predict.py
+python predict.py --fold 0
+python predict.py --fold 1
+python predict.py --fold 2
+python predict.py --fold 3
+python predict.py --fold 4

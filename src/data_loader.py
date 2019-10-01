@@ -22,7 +22,6 @@ train_aug = albu.Compose([
         albu.GridDistortion(p=1),
         albu.OpticalDistortion(p=1)
     ], p=0.5),
-    albu.RandomSizedCrop(min_max_height=(160, 320), height=320, width=640, w2h_ratio=2, p=0.5),
     albu.HorizontalFlip(p=0.5),
     albu.VerticalFlip(p=0.5),
     albu.ShiftScaleRotate(shift_limit=0.2, scale_limit=0.2, rotate_limit=45,

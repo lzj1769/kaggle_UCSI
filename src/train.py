@@ -18,15 +18,15 @@ import matplotlib.pyplot as plt
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Training model for steel defect detection')
+    parser = argparse.ArgumentParser(description='Training model for understanding cloud organization')
     parser.add_argument("--model", type=str, default='UResNet34',
                         help="Name for encode used in Unet. Currently available: UResNet34")
     parser.add_argument("--num-workers", type=int, default=4,
                         help="Number of workers for training. Default: 4")
     parser.add_argument("--batch-size", type=int, default=12,
                         help="Batch size for training. Default: 12")
-    parser.add_argument("--num-epochs", type=int, default=200,
-                        help="Number of epochs for training. Default: 200")
+    parser.add_argument("--num-epochs", type=int, default=100,
+                        help="Number of epochs for training. Default: 100")
     parser.add_argument("--fold", type=int, default=0)
     parser.add_argument("--mixup", action="store_true")
 
@@ -361,6 +361,8 @@ class TrainerClassification(object):
             print()
             self.plot_history()
 
+        return best_acc
+
 
 def main():
     args = parse_args()
@@ -387,26 +389,26 @@ def main():
                                                                                       df_valid['isSugar'].sum()))
     model_trainer, best = None, None
     if args.model == "UResNet34":
-        best = model_trainer = TrainerSegmentation(model=UResNet34(),
-                                                   num_workers=args.num_workers,
-                                                   batch_size=args.batch_size,
-                                                   num_epochs=args.num_epochs,
-                                                   model_save_path=model_save_path,
-                                                   training_history_path=training_history_path,
-                                                   model_save_name=args.model,
-                                                   fold=args.fold)
+        model_trainer = TrainerSegmentation(model=UResNet34(),
+                                            num_workers=args.num_workers,
+                                            batch_size=args.batch_size,
+                                            num_epochs=args.num_epochs,
+                                            model_save_path=model_save_path,
+                                            training_history_path=training_history_path,
+                                            model_save_name=args.model,
+                                            fold=args.fold)
     elif args.model == "ResNet34":
-        best = model_trainer = TrainerClassification(model=ResNet34(),
-                                                     num_workers=args.num_workers,
-                                                     batch_size=args.batch_size,
-                                                     num_epochs=args.num_epochs,
-                                                     model_save_path=model_save_path,
-                                                     training_history_path=training_history_path,
-                                                     model_save_name=args.model,
-                                                     fold=args.fold,
-                                                     mixup=args.mixup)
+        model_trainer = TrainerClassification(model=ResNet34(),
+                                              num_workers=args.num_workers,
+                                              batch_size=args.batch_size,
+                                              num_epochs=args.num_epochs,
+                                              model_save_path=model_save_path,
+                                              training_history_path=training_history_path,
+                                              model_save_name=args.model,
+                                              fold=args.fold,
+                                              mixup=args.mixup)
 
-    model_trainer.start()
+    best = model_trainer.start()
 
     print("Training is done! best is {}".format(best))
 

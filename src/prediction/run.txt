@@ -1,35 +1,0 @@
-  0%|          | 0.00/1.30M [00:00<?, ?B/s] 79%|███████▉  | 1.02M/1.30M [00:00<00:00, 9.94MB/s]100%|██████████| 1.30M/1.30M [00:03<00:00, 350kB/s] 
-  0%|          | 0.00/1.31M [00:00<?, ?B/s]100%|██████████| 1.31M/1.31M [00:03<00:00, 343kB/s]
-  0%|          | 0.00/1.31M [00:00<?, ?B/s]100%|██████████| 1.31M/1.31M [00:05<00:00, 243kB/s]
-  0%|          | 0.00/1.27M [00:00<?, ?B/s]100%|██████████| 1.27M/1.27M [00:03<00:00, 346kB/s]
-  0%|          | 0.00/1.24M [00:00<?, ?B/s]100%|██████████| 1.24M/1.24M [00:03<00:00, 429kB/s]
-  0%|          | 0.00/1.27M [00:00<?, ?B/s]100%|██████████| 1.27M/1.27M [00:05<00:00, 240kB/s]
-  0%|          | 0.00/1.27M [00:00<?, ?B/s]100%|██████████| 1.27M/1.27M [00:02<00:00, 476kB/s]
-  0%|          | 0.00/1.28M [00:00<?, ?B/s]100%|██████████| 1.28M/1.28M [00:05<00:00, 248kB/s]
-  0%|          | 0.00/1.23M [00:00<?, ?B/s]100%|██████████| 1.23M/1.23M [00:05<00:00, 219kB/s]
-  0%|          | 0.00/1.24M [00:00<?, ?B/s]100%|██████████| 1.24M/1.24M [00:03<00:00, 343kB/s]
-  0%|          | 0.00/1.29M [00:00<?, ?B/s]100%|██████████| 1.29M/1.29M [00:03<00:00, 367kB/s]
-Starting upload for file submission_classification_all_fold_and_segmentation_fold_0.csv
-Warning: Looks like you're using an outdated API Version, please consider updating (server 1.5.6 / client 1.5.5)
-Upload successful: submission_classification_all_fold_and_segmentation_fold_0.csv (1MB)
-Starting upload for file submission_classification_all_fold_and_segmentation_fold_3.csv
-Upload successful: submission_classification_all_fold_and_segmentation_fold_3.csv (1MB)
-Starting upload for file submission_classification_all_fold_and_segmentation_fold_1.csv
-Upload successful: submission_classification_all_fold_and_segmentation_fold_1.csv (1MB)
-Starting upload for file submission_classification_all_fold_and_segmentation_fold_4.csv
-Upload successful: submission_classification_all_fold_and_segmentation_fold_4.csv (1MB)
-Starting upload for file submission_classification_all_fold_and_segmentation_all_fold.csv
-Upload successful: submission_classification_all_fold_and_segmentation_all_fold.csv (1MB)
-Starting upload for file submission_classification_all_fold_and_segmentation_fold_2.csv
-Upload successful: submission_classification_all_fold_and_segmentation_fold_2.csv (1MB)
-Starting upload for file submission_fold_0.csv
-Upload successful: submission_fold_0.csv (1MB)
-Starting upload for file submission_fold_1.csv
-Upload successful: submission_fold_1.csv (1MB)
-Starting upload for file submission_fold_2.csv
-Upload successful: submission_fold_2.csv (1MB)
-Starting upload for file submission_fold_4.csv
-Upload successful: submission_fold_4.csv (1MB)
-Starting upload for file submission_fold_3.csv
-Upload successful: submission_fold_3.csv (1MB)
-Dataset version is being created. Please check progress at https://www.kaggle.com/zhijianli/severstal_csv_submission
