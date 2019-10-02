@@ -34,7 +34,3 @@ export PERL5LIB=/home/rs619065/perl5/lib/perl5:$PERL5LIB
 source ~/miniconda2/bin/activate py36env
 
 python predict.py --fold 0
-python predict.py --fold 1
-python predict.py --fold 2
-python predict.py --fold 3
-python predict.py --fold 4

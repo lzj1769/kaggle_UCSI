@@ -78,7 +78,8 @@ def post_process(mask, min_size):
         if p.sum() > min_size:
             predictions[p] = 1
             num += 1
-    return predictions, num
+
+    return predictions
 
 
 def rle2mask(rle=""):
@@ -178,9 +179,7 @@ def segmentation_single_fold_valid(model, fold):
     df_path = os.path.join(SPLIT_FOLDER, "fold_{}_valid.csv".format(fold))
     df = pd.read_csv(df_path)
 
-    valid_masks = np.zeros(shape=(len(df), 4, 350, 525), dtype=np.float32)
-    valid_preds = np.zeros(shape=(len(df), 4, 350, 525), dtype=np.float32)
-
+    dice = 0.0
     for i in range(len(df)):
         filename, mask = make_mask(i, df)
         image = cv2.imread(os.path.join(TRAIN_DATA_FOLDER, filename))
@@ -189,14 +188,23 @@ def segmentation_single_fold_valid(model, fold):
 
         pred_seg = predict_segmentation(image=image, model=model)[0]
         for cls, pred in enumerate(pred_seg):
-            valid_masks[i, cls] = cv2.resize(mask[:, :, cls], (525, 350), interpolation=cv2.INTER_LINEAR)
-            valid_masks[i, cls] = (valid_masks[i, cls] > 0.5).astype(np.float32)
-            valid_preds[i, cls] = cv2.resize(pred, (525, 350), interpolation=cv2.INTER_LINEAR)
+            valid_mask = cv2.resize(mask[:, :, cls], (525, 350), interpolation=cv2.INTER_LINEAR)
+            pred = cv2.resize(pred, (525, 350), interpolation=cv2.INTER_LINEAR)
 
-    return valid_masks, valid_preds
+            t = (valid_mask > 0.5).astype(np.float32)
+            p = post_process((pred > 0.5).astype(np.int8), min_size=10000)
+
+            if p.sum() == 0.0 and t.sum() == 0.0:
+                dice += 1.0
+            else:
+                dice += (2.0 * (p * t).sum()) / (p.sum() + t.sum())
+
+    dice /= (len(df) * 4)
+
+    return dice
 
 
-def segmentation_single_fold_test(model, fold, class_params=None, valid_dice=None):
+def segmentation_single_fold_test(model, fold, valid_dice=None):
     # prepare data
     df = pd.read_csv(TEST_DF)
     df['ImageId'] = df['Image_Label'].apply(lambda x: x.split('_')[0])
@@ -211,13 +219,8 @@ def segmentation_single_fold_test(model, fold, class_params=None, valid_dice=Non
         pred_seg = predict_segmentation(image=image, model=model)[0]
         for cls, pred in enumerate(pred_seg):
             pred = cv2.resize(pred, (525, 350), interpolation=cv2.INTER_LINEAR)
-            if class_params is not None:
-                pred = (pred > class_params[cls][0]).astype(np.int8)
-                pred, num = post_process(pred, min_size=class_params[cls][1])
-                rle = mask2rle(pred.astype(np.int8))
-            else:
-                rle = mask2rle((pred > 0.5).astype(np.int8))
-
+            pred = post_process((pred > 0.5).astype(np.int8), min_size=10000)
+            rle = mask2rle(pred)
             name = filename + "_" + cls_name[cls]
             prediction.append([name, rle])
 
@@ -226,7 +229,7 @@ def segmentation_single_fold_test(model, fold, class_params=None, valid_dice=Non
     message = "segmentation_fold_{}_valid_{}".format(fold, valid_dice)
     df = pd.DataFrame(prediction, columns=['Image_Label', 'EncodedPixels'])
     df.to_csv(submission_filename, index=False)
-    # submit(submission_filename=submission_filename, message=message)
+    submit(submission_filename=submission_filename, message=message)
 
 
 def segmentation_single_fold(fold):
@@ -238,11 +241,8 @@ def segmentation_single_fold(fold):
     state = torch.load(model_save_path, map_location=lambda storage, loc: storage)
     model.load_state_dict(state["state_dict"])
 
-    valid_masks, valid_preds = segmentation_single_fold_valid(model=model, fold=fold)
-
-    # optimize threshold and mask size
-    class_params, valid_dice = optimal(valid_masks=valid_masks, valid_preds=valid_preds)
-    segmentation_single_fold_test(model=model, fold=fold, class_params=class_params, valid_dice=valid_dice)
+    valid_dice = segmentation_single_fold_valid(model=model, fold=fold)
+    segmentation_single_fold_test(model=model, fold=fold, valid_dice=valid_dice)
 
 
 def main():
